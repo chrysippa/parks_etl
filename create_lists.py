@@ -1,5 +1,9 @@
 import pickle
 
+# create connection
+# pull from parks: park_id, type, city, accuweather_location
+# pull from special_days: date, park_id, holiday, note (aka all columns)
+
 # Create empty list for today's data
 
 today_fieldnames = ['date', 
@@ -30,17 +34,13 @@ today_fieldnames = ['date',
                 'holiday', 
                 'special_park_day', 
                 'sunrise', 
-                'sunset']
+                'sunset',
+                'special_day_note']
 
 today_data_row = {field: None for field in today_fieldnames}
 
-#fetch fom parks table
-
 # Test case: 4 parks
 today_data = [today_data_row for i in [0, 1, 2, 3]]
-
-with open('today_data.pickle', 'wb') as today_file:
-    pickle.dump(today_data, today_file)
 
 
 
@@ -70,12 +70,26 @@ tomorrow_fieldnames = ['date',
                 'pollen_ragweed', 
                 'pollen_grass', 
                 'holiday', 
-                'special_park_day']
+                'special_park_day',
+                'special_day_note']
 
 tomorrow_data_row = {field: None for field in tomorrow_fieldnames}
 
 # Test case: 4 parks
 tomorrow_data = [tomorrow_data_row for i in [0, 1, 2, 3]]
+
+
+
+
+# Persist park info needed for later ETL steps
+#
+
+
+
+# Persist the lists
+
+with open('today_data.pickle', 'wb') as today_file:
+    pickle.dump(today_data, today_file)
 
 with open('tomorrow_data.pickle', 'wb') as tomorrow_file:
     pickle.dump(tomorrow_data, tomorrow_file)
