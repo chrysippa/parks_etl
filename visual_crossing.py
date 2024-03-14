@@ -1,10 +1,14 @@
 import requests
-import pandas
+import pickle
 from visual_crossing_key import visual_crossing_api_key
 
-# get park ids and city, state
+with open('today_data.pickle', 'rb') as today_file:
+    today_data = pickle.load(today_file)
 
-# create 2 dataframes: 1 today, 1 tomorrow
+with open('tomorrow_data.pickle', 'rb') as tomorrow_file:
+    tomorrow_data = pickle.load(tomorrow_file)
+
+# get park ids and city, state
 
 # Test case - Afton State Park
 city = "Hastings, MN"
@@ -40,7 +44,8 @@ else:
 precip_yesterday_in = yesterday["precip"]
 precip_2_days_ago_in = two_days_ago["precip"]
 
+with open('today_data.pickle', 'wb') as today_file:
+    pickle.dump(today_data, today_file)
 
-# insert data to dataframes
-
-# export dataframe as csv
+with open('tomorrow_data.pickle', 'wb') as tomorrow_file:
+    pickle.dump(tomorrow_data, tomorrow_file)
