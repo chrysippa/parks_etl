@@ -30,7 +30,12 @@ fieldnames = ['date',
                 'sunrise', 
                 'sunset']
 
-data = {field: None for field in fieldnames}
+data_row = {field: None for field in fieldnames}
+
+#fetch fom parks table
+
+# Test case: 4 parks
+data = [data_row for i in [0, 1, 2, 3]]
 
 with open('data.pickle', 'wb') as file:
     pickle.dump(data, file)
