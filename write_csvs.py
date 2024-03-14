@@ -1,18 +1,40 @@
 import pickle
 import csv
 
-with open('data.pickle', 'rb') as file:
-    data = pickle.load(file)
+# Write today's data
+
+with open('today_data.pickle', 'rb') as today_file:
+    today_data = pickle.load(today_file)
 
 # convert all data to string
-for park in data:
+for park in today_data:
     for key in park.keys():
         park[key] = str(park[key])
 
-fieldnames = data[0].keys()
+today_fieldnames = today_data[0].keys()
 
-with open('data.csv', 'w', newline='') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+with open('today_data.csv', 'w', newline='') as today_csv:
+    writer = csv.DictWriter(today_csv, fieldnames=today_fieldnames)
 
     writer.writeheader()
-    writer.writerows(data)
+    writer.writerows(today_data)
+
+
+
+# Write tomorrow's data
+
+with open('tomorrow_data.pickle', 'rb') as tomorrow_file:
+    tomorrow_data = pickle.load(tomorrow_file)
+
+# convert all data to string
+for park in tomorrow_data:
+    for key in park.keys():
+        park[key] = str(park[key])
+
+tomorrow_fieldnames = tomorrow_data[0].keys()
+
+with open('tomorrow_data.csv', 'w', newline='') as tomorrow_csv:
+    writer = csv.DictWriter(tomorrow_csv, fieldnames=tomorrow_fieldnames)
+
+    writer.writeheader()
+    writer.writerows(tomorrow_data)
