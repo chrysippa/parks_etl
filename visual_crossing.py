@@ -22,7 +22,7 @@ url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/servic
 # 429 TOO_MANY_REQUESTS The account has exceeded their assigned limits. 
 # 500 INTERNAL_SERVER_ERROR A general error has occurred processing the request.
 
-response = requests.get(url)
+response = requests.get(url) # add timeout=num_seconds and try-except block in case of Timeout exception
 
 status = response.status_code
 data = response.json()

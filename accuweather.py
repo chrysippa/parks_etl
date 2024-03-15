@@ -10,6 +10,7 @@ with open('tomorrow_data.pickle', 'rb') as tomorrow_file:
 
 # get park ids and accuweather location key codes
 
+# use gzip encoding by adding an HTTP header
 # for each park
 # try:
 #   location_key = 
@@ -24,7 +25,7 @@ with open('tomorrow_data.pickle', 'rb') as tomorrow_file:
 location_key = str(2228246)
 park_url = f"http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={accuweather_api_key}&details=true"
 
-response = requests.get(park_url)
+response = requests.get(park_url) # add timeout=num_seconds and use try-except block in case of Timeout exception
 
 status = response.status_code
 
