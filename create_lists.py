@@ -81,8 +81,20 @@ tomorrow_data = [tomorrow_data_row for i in [0, 1, 2, 3]]
 
 
 
-# Persist park info needed for later ETL steps
-#
+# Create empty list for park metadata - needed for later ETL steps
+
+metadata_fieldnames = ["park_id", 
+                       "type", 
+                       "city", 
+                       "accuweather_location"]
+
+park_metadata_row = {field: None for field in metadata_fieldnames}
+
+
+# Test case: 4 parks
+park_metadata = [park_metadata_row for i in [0, 1, 2, 3]]
+
+# TODO: insert pulled metadata
 
 
 
@@ -93,3 +105,6 @@ with open('today_data.pickle', 'wb') as today_file:
 
 with open('tomorrow_data.pickle', 'wb') as tomorrow_file:
     pickle.dump(tomorrow_data, tomorrow_file)
+
+with open('park_metadata.pickle', 'wb') as metadata_file:
+    pickle.dump(park_metadata, metadata_file)
