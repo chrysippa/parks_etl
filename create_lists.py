@@ -1,7 +1,7 @@
 import pickle
 
 # create connection
-# pull from parks: park_id, type, city, accuweather_location
+# pull from parks: park_id, name, type, city, accuweather_location
 # pull from special_days: date, park_id, holiday, note (aka all columns)
 
 # Create empty list for today's data
@@ -84,6 +84,7 @@ tomorrow_data = [tomorrow_data_row for i in [0, 1, 2, 3]]
 # Create empty list for park metadata - needed for later ETL steps
 
 metadata_fieldnames = ["park_id", 
+                       "name",
                        "type", 
                        "city", 
                        "accuweather_location"]
