@@ -83,11 +83,11 @@ tomorrow_data = [tomorrow_data_row for i in [0, 1, 2, 3]]
 
 # Create empty list for park metadata - needed for later ETL steps
 
-metadata_fieldnames = ["park_id", 
-                       "name",
-                       "type", 
-                       "city", 
-                       "accuweather_location"]
+metadata_fieldnames = ['park_id', 
+                       'name',
+                       'type', 
+                       'city', 
+                       'accuweather_location']
 
 park_metadata_row = {field: None for field in metadata_fieldnames}
 
