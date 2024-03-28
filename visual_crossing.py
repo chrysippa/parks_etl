@@ -1,12 +1,17 @@
+import pandas as pd
 import requests
-import pickle
 from visual_crossing_key import visual_crossing_api_key
 
-with open('today_data.pickle', 'rb') as today_file:
-    today_data = pickle.load(today_file)
+# Import persisted data
 
-with open('tomorrow_data.pickle', 'rb') as tomorrow_file:
-    tomorrow_data = pickle.load(tomorrow_file)
+today_data = pd.read_pickle('today_data.pickle')
+
+tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
+
+park_metadata = pd.read_pickle('park_metadata.pickle')
+
+
+
 
 # get park ids and city, state
 
@@ -44,8 +49,11 @@ else:
 precip_yesterday_in = yesterday["precip"]
 precip_2_days_ago_in = two_days_ago["precip"]
 
-with open('today_data.pickle', 'wb') as today_file:
-    pickle.dump(today_data, today_file)
 
-with open('tomorrow_data.pickle', 'wb') as tomorrow_file:
-    pickle.dump(tomorrow_data, tomorrow_file)
+
+
+# Persist the data
+
+today_data.to_pickle('today_data.pickle')
+
+tomorrow_data.to_pickle('tomorrow_data.pickle')
