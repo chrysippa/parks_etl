@@ -4,7 +4,7 @@ import pandas as pd
 
 
 
-# Fetch from database: parks metadata to help construct dataframes
+# Fetch from database: park metadata needed in later ETL steps
 # Also fetch from special_days to reuse connection
 
 # to authenticate in production, see here: https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa
@@ -81,7 +81,7 @@ today_data_rows = []
 
 # Create 1 row per park. Filled with park_id and value 'None' for other columns.
 for park in pulled_data_parks:
-    park_id = park[0]
+    park_id = park['park_id']
     row = {field: (int(park_id) if field=='park_id' else None) for field in today_fieldnames}
     today_data_rows.append(row)
 
@@ -123,7 +123,7 @@ tomorrow_data_rows = []
 
 # Create 1 row per park. Filled with park_id and value 'None' for other columns.
 for park in pulled_data_parks:
-    park_id = park[0]
+    park_id = park['park_id']
     row = {field: (int(park_id) if field=='park_id' else None) for field in tomorrow_fieldnames}
     tomorrow_data_rows.append(row)
 
@@ -133,27 +133,26 @@ tomorrow_data = pd.DataFrame(data=tomorrow_data_rows)
 
 
 
-# Create empty dataframe for park metadata - needed for later ETL steps
-"""
-metadata_fieldnames = ['park_id', 
-                       'name',
-                       'type', 
-                       'city',
-                       'site_url']
-
-park_metadata_rows = []
-
-# Create 1 row per park. Filled with park_id and value 'None' for other columns.
-for park in pulled_data_parks:
-    park_id = park['park_id']
-    row = {field: (int(park_id) if field=='park_id' else None) for field in metadata_fieldnames}
-    park_metadata_rows.append(row)
-
-# Create dataframe from rows
-park_metadata = pd.DataFrame(data=park_metadata_rows)
-"""
+# Create dataframe for park metadata
 park_metadata = pd.DataFrame(data=pulled_data_parks)
 
+
+
+
+# Append metadata to other dataframes
+today_data = pd.merge(today_data, park_metadata, on='park_id')
+tomorrow_data = pd.merge(tomorrow_data, park_metadata, on='park_id')
+
+# turn park_id into an index for ease of insertion
+today_data.set_index('park_id', inplace=True)
+tomorrow_data.set_index('park_id', inplace=True)
+
+
+
+
+# Insert special_days information
+
+# Insert today's and tomorrow's date
 
 
 
