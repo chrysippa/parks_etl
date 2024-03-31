@@ -3,10 +3,7 @@ import datetime
 import pandas as pd
 
 
-
-
-# Fetch from database: park metadata needed in later ETL steps
-# Also fetch from special_days to reuse connection
+# Fetch from database: park IDS and metadata needed for ETL
 
 # to authenticate in production, see here: https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa
 
@@ -18,9 +15,13 @@ table = f'projects/{project_id}/datasets/parks/tables/parks'
 
 requested_session = types.ReadSession()
 requested_session.table = table
-requested_session.data_format = types.DataFormat.AVRO # or can change to Apache Arrow; maybe good for date support
+requested_session.data_format = types.DataFormat.AVRO
 
-requested_session.read_options.selected_fields = ['park_id', 'name', 'type', 'city', 'site_url'] # columns to pull
+requested_session.read_options.selected_fields = ['park_id', 
+                                                  'name', 
+                                                  'type', 
+                                                  'city', 
+                                                  'site_url']
 
 parent = f'projects/{project_id}'
 session = client.create_read_session(
@@ -36,28 +37,29 @@ pulled_data_parks = []
 
 try:
     for row in rows:
-        pulled_data_parks.append(row) # append 1 dict for row
+        pulled_data_parks.append(row) # append rows as dicts
 except EOFError:
     pass
 
 
 
+# Also fetch from special_days table, to reuse client object as recommended
+
 today_dt = datetime.date.today()
 today = str(today_dt)
 tomorrow = str(today_dt + datetime.timedelta(days=1))
-
-
-# pull from special_days
 
 table = f'projects/{project_id}/datasets/parks/tables/special_days'
 
 requested_session = types.ReadSession()
 requested_session.table = table
-requested_session.data_format = types.DataFormat.AVRO # or can change to Apache Arrow; maybe good for date support
+requested_session.data_format = types.DataFormat.AVRO 
 
-requested_session.read_options.selected_fields = ['date', 'park_id', 'holiday', 'note'] # columns to pull
-# TODO: figure out how to format this WHERE clause; needs quotes?
-requested_session.read_options.row_restriction = f'date = {today} OR date ={tomorrow}'
+requested_session.read_options.selected_fields = ['date', 
+                                                  'park_id', 
+                                                  'holiday', 
+                                                  'note']
+requested_session.read_options.row_restriction = f'date = "{today}" OR date ="{tomorrow}"' # WHERE clause
 
 parent = f'projects/{project_id}'
 session = client.create_read_session(
@@ -73,13 +75,13 @@ pulled_data_days = []
 
 try:
     for row in rows:
-        pulled_data_days.append(row) # append 1 dict for row
+        pulled_data_days.append(row) # append rows as dicts
 except EOFError:
     pass
 
 
 
-# Create empty dataframe for today's data
+# Create dataframe for today's data
 
 today_fieldnames = ['date', 
                 'park_id', 
@@ -114,19 +116,17 @@ today_fieldnames = ['date',
 
 today_data_rows = []
 
-# Create 1 row per park. Filled with park_id and value 'None' for other columns.
+# Dataframe rows contain park_id, otherwise value 'None' for other columns
 for park in pulled_data_parks:
     park_id = park['park_id']
     row = {field: (int(park_id) if field=='park_id' else None) for field in today_fieldnames}
     today_data_rows.append(row)
 
-# Create dataframe from rows
 today_data = pd.DataFrame(data=today_data_rows)
 
 
 
-
-# Create empty dataframe for tomorrow's data
+# Create dataframe for tomorrow's data
 
 tomorrow_fieldnames = ['date', 
                 'park_id', 
@@ -156,35 +156,34 @@ tomorrow_fieldnames = ['date',
 
 tomorrow_data_rows = []
 
-# Create 1 row per park. Filled with park_id and value 'None' for other columns.
+# Dataframe rows contain park_id, otherwise value 'None' for other columns
 for park in pulled_data_parks:
     park_id = park['park_id']
     row = {field: (int(park_id) if field=='park_id' else None) for field in tomorrow_fieldnames}
     tomorrow_data_rows.append(row)
 
-# Create dataframe from rows
 tomorrow_data = pd.DataFrame(data=tomorrow_data_rows)
 
 
 
+# Append metadata to dataframes
 
-# Create dataframe for park metadata
 park_metadata = pd.DataFrame(data=pulled_data_parks)
 
-
-
-
-# Append metadata to other dataframes
 today_data = pd.merge(today_data, park_metadata, on='park_id')
 tomorrow_data = pd.merge(tomorrow_data, park_metadata, on='park_id')
 
-# turn park_id into an index for ease of insertion
+
+
+# Turn park_id into an index for ease of insertion
+
 today_data.set_index('park_id', inplace=True)
 tomorrow_data.set_index('park_id', inplace=True)
 
 
 
-# Insert today's and tomorrow's date YYYY-MM-DD
+# Insert today's and tomorrow's date
+
 num_parks = today_data.shape[0]
 
 today_data['date'] = [today for x in range(num_parks)]
@@ -192,26 +191,26 @@ tomorrow_data['date'] = [tomorrow for x in range(num_parks)]
 
 
 
-# Insert special_days information: holiday bool, special_park_day bool, special_day_note string
-# HANDLE CASE WHERE pulled_data_days IS EMPTY LIST!!!
+# Insert special_days information if applicable
 
-#special_dates = all dates in pulled_data_days set()
-#if today_data date in special_dates
-#    get all rows with todays date 
-#    insert to today_data where park_id matches
-#if tomorrow_data date in special_dates
-#    same
+if pulled_data_days:
+    for day in pulled_data_days:
+        park_id = day['park_id']
+        holiday = day['holiday']
+        day_note = day['note']
+        if str(day['date']) == today:
+            today_data.at[park_id, 'special_park_day'] = True
+            today_data.at[park_id, 'holiday'] = holiday
+            today_data.at[park_id, 'special_day_note'] = day_note
+        elif str(day['date']) == tomorrow:
+            tomorrow_data.at[park_id, 'special_park_day'] = True
+            tomorrow_data.at[park_id, 'holiday'] = holiday
+            tomorrow_data.at[park_id, 'special_day_note'] = day_note
+
+
 
 # Persist the data
 
 today_data.to_pickle('today_data.pickle')
-
 tomorrow_data.to_pickle('tomorrow_data.pickle')
-
 park_metadata.to_pickle('park_metadata.pickle')
-
-"""
-print(today_data)
-print(tomorrow_data)
-print(park_metadata)
-"""
