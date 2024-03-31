@@ -1,4 +1,5 @@
 from google.cloud.bigquery_storage import BigQueryReadClient, types
+import datetime
 import pandas as pd
 
 
@@ -39,8 +40,42 @@ try:
 except EOFError:
     pass
 
-# pull from special_days: date, park_id, holiday, note (aka all columns)
 
+
+today_dt = datetime.date.today()
+today = str(today_dt)
+tomorrow = str(today_dt + datetime.timedelta(days=1))
+
+
+# pull from special_days
+
+table = f'projects/{project_id}/datasets/parks/tables/special_days'
+
+requested_session = types.ReadSession()
+requested_session.table = table
+requested_session.data_format = types.DataFormat.AVRO # or can change to Apache Arrow; maybe good for date support
+
+requested_session.read_options.selected_fields = ['date', 'park_id', 'holiday', 'note'] # columns to pull
+# TODO: figure out how to format this WHERE clause; needs quotes?
+requested_session.read_options.row_restriction = f'date = {today} OR date ={tomorrow}'
+
+parent = f'projects/{project_id}'
+session = client.create_read_session(
+    parent=parent,
+    read_session=requested_session,
+    max_stream_count=1
+)
+reader = client.read_rows(session.streams[0].name)
+
+rows = reader.rows(session)
+
+pulled_data_days = []
+
+try:
+    for row in rows:
+        pulled_data_days.append(row) # append 1 dict for row
+except EOFError:
+    pass
 
 
 
@@ -149,12 +184,23 @@ tomorrow_data.set_index('park_id', inplace=True)
 
 
 
+# Insert today's and tomorrow's date YYYY-MM-DD
+num_parks = today_data.shape[0]
 
-# Insert special_days information
+today_data['date'] = [today for x in range(num_parks)]
+tomorrow_data['date'] = [tomorrow for x in range(num_parks)]
 
-# Insert today's and tomorrow's date
 
 
+# Insert special_days information: holiday bool, special_park_day bool, special_day_note string
+# HANDLE CASE WHERE pulled_data_days IS EMPTY LIST!!!
+
+#special_dates = all dates in pulled_data_days set()
+#if today_data date in special_dates
+#    get all rows with todays date 
+#    insert to today_data where park_id matches
+#if tomorrow_data date in special_dates
+#    same
 
 # Persist the data
 
