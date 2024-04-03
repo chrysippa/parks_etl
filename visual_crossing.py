@@ -7,8 +7,8 @@ from visual_crossing_key import visual_crossing_api_key
 
 # Import persisted data
 
-today_data = pd.read_pickle('test_today_data.pickle')
-tomorrow_data = pd.read_pickle('test_tomorrow_data.pickle')
+today_data = pd.read_pickle('today_data.pickle')
+tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
 
 
 
@@ -122,5 +122,5 @@ if alerts_list:
         writer.writeheader()
         writer.writerows(alerts_list)
 
-today_data.to_pickle('test_today_data_output.pickle')
-tomorrow_data.to_pickle('test_tomorrow_data_output.pickle')
+today_data.to_pickle('today_data.pickle')
+tomorrow_data.to_pickle('tomorrow_data.pickle')
