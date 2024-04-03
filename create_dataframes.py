@@ -196,16 +196,21 @@ tomorrow_data['date'] = [tomorrow for x in range(num_parks)]
 if pulled_data_days:
     for day in pulled_data_days:
         park_id = day['park_id']
-        holiday = day['holiday']
+        holiday = bool(day['holiday'])
         day_note = day['note']
         if str(day['date']) == today:
-            today_data.at[park_id, 'special_park_day'] = True
-            today_data.at[park_id, 'holiday'] = holiday
             today_data.at[park_id, 'special_day_note'] = day_note
+            if holiday:
+                today_data.at[park_id, 'holiday'] = True
+            else:
+                today_data.at[park_id, 'special_park_day'] = True
+                
         elif str(day['date']) == tomorrow:
-            tomorrow_data.at[park_id, 'special_park_day'] = True
-            tomorrow_data.at[park_id, 'holiday'] = holiday
             tomorrow_data.at[park_id, 'special_day_note'] = day_note
+            if holiday:
+                tomorrow_data.at[park_id, 'holiday'] = True
+            else:
+                tomorrow_data.at[park_id, 'special_park_day'] = True
 
 # If not a special day or holiday, insert False
 
