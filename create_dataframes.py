@@ -204,7 +204,7 @@ if pulled_data_days:
                 today_data.at[park_id, 'holiday'] = True
             else:
                 today_data.at[park_id, 'special_park_day'] = True
-                
+
         elif str(day['date']) == tomorrow:
             tomorrow_data.at[park_id, 'special_day_note'] = day_note
             if holiday:
@@ -226,4 +226,3 @@ tomorrow_data['special_park_day'].fillna(value='False', inplace=True)
 
 today_data.to_pickle('today_data.pickle')
 tomorrow_data.to_pickle('tomorrow_data.pickle')
-park_metadata.to_pickle('park_metadata.pickle')
