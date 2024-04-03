@@ -4,3 +4,4 @@ python create_dataframes.py
 python visual_crossing.py
 python accuweather.py
 python write_csvs.py
+python write_to_db.py
