@@ -1,82 +1,104 @@
+from accuweather_key import accuweather_api_key
 import pandas as pd
 import requests
-from accuweather_key import accuweather_api_key
+import time
+
 
 # Import persisted data
 
 today_data = pd.read_pickle('today_data.pickle')
-
 tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
 
-park_metadata = pd.read_pickle('park_metadata.pickle')
+
+
+# Query API for location codes for each unique city
+
+cities = set(today_data['city'])
+
+for city in cities:
+    
+    location_url = f'http://dataservice.accuweather.com/locations/v1/cities/US/search?apikey={accuweather_api_key}&q={city}'
+    headers = {'Accept-Encoding': 'gzip'}
+
+    retries = 3
+    for i in range(retries):
+        try:
+            response = requests.get(location_url, headers=headers, timeout=3.1)
+            response.raise_for_status()
+            break
+        except (requests.Timeout, requests.ConnectionError):
+            time.sleep(i + 1)
+            continue
+        except requests.HTTPError:
+            if response.status_code == 500:
+                time.sleep(i + 1)
+                continue
+
+    location_data = response.json()
+    location_key = location_data[0]['Key']
 
 
 
+    # Query API for air quality per location
 
-# get park ids and accuweather location key codes
+    url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={accuweather_api_key}&details=true'
 
-# use gzip encoding by adding an HTTP header
-# for each park
-# try:
-#   location_key = 
-#   park_url = f"http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={accuweather_api_key}&details=true"
-#   response = requests.get(park_url)
-# except HTTP response 500:
-#   try again
-# except HTTP response not 400 or 500:
-#   stuff
+    for i in range(retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=3.1)
+            response.raise_for_status()
+            break
+        except (requests.Timeout, requests.ConnectionError):
+            time.sleep(i + 1)
+            continue
+        except requests.HTTPError:
+            if response.status_code == 500:
+                time.sleep(i + 1)
+                continue
 
-# Test case - Afton State Park
-location_key = str(2228246)
-park_url = f"http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={accuweather_api_key}&details=true"
+    data = response.json()
+    today = data['DailyForecasts'][0]['AirAndPollen']
+    tomorrow = data['DailyForecasts'][1]['AirAndPollen']
 
-response = requests.get(park_url) # add timeout=num_seconds and use try-except block in case of Timeout exception
+    # List of park_ids matching this city; may be multiple
+    parks_in_city = list(today_data.query('city == @city').index)
 
-status = response.status_code
+    for p in parks_in_city:
+        #Insert to today_data
 
-# Response structure:
-""" {"DailyForecasts":[ 
-                        {"AirAndPollen": [ 
-                                            {"Name": "AirQuality or pollen type", "Category": "Textcategory", "Type": "AQtype"} 
-                                        ]},
-                        {"AirAndPollen tomorrow": [same structure] } 
-                ]
-} """
+        for datum in today:
+            name = datum['Name']
+            if name == 'AirQuality':
+                today_data.loc[p, 'air_quality_type'] = datum['Type']
+                today_data.loc[p, 'air_quality_level'] = datum['Category']
+            if name == 'Grass':
+                today_data.loc[p, 'pollen_grass'] = datum['Category']
+            if name == 'Mold':
+                today_data.loc[p, 'pollen_mold'] = datum['Category']
+            if name == 'Ragweed':
+                today_data.loc[p, 'pollen_ragweed'] = datum['Category']
+            if name == 'Tree':
+                today_data.loc[p, 'pollen_tree'] = datum['Category']
 
-data = response.json()
+        #Insert to tomorrow_data
 
-today = data["DailyForecasts"][0]
-tomorrow = data["DailyForecasts"][1]
-
-today_air = today["AirAndPollen"]
-tomorrow_air = tomorrow["AirAndPollen"]
-
-for datum in today_air:
-    if datum["Name"] == "AirQuality":
-        today_aq_category = datum["Category"]
-        today_aq_type = datum["Type"]
-    if datum["Name"] == "Grass":
-        today_grass = datum["Category"]
-    if datum["Name"] == "Mold":
-        today_mold = datum["Category"]
-    if datum["Name"] == "Ragweed":
-        today_ragweed = datum["Category"]
-    if datum["Name"] == "Tree":
-        today_tree = datum["Category"]
-
-
-print("Today aq category: ", today_aq_category)
-print("Today aq type: ", today_aq_type)
-print("Today grass: ", today_grass)
-print("Today mold: ", today_mold)
-print("Today ragweed: ", today_ragweed)
-print("Today tree: ", today_tree)
-
+        for datum in tomorrow:
+            name = datum['Name']
+            if name == 'AirQuality':
+                tomorrow_data.loc[p, 'air_quality_type'] = datum['Type']
+                tomorrow_data.loc[p, 'air_quality_level'] = datum['Category']
+            if name == 'Grass':
+                tomorrow_data.loc[p, 'pollen_grass'] = datum['Category']
+            if name == 'Mold':
+                tomorrow_data.loc[p, 'pollen_mold'] = datum['Category']
+            if name == 'Ragweed':
+                tomorrow_data.loc[p, 'pollen_ragweed'] = datum['Category']
+            if name == 'Tree':
+                tomorrow_data.loc[p, 'pollen_tree'] = datum['Category']
 
 
 
 # Persist the data
 
 today_data.to_pickle('today_data.pickle')
-
 tomorrow_data.to_pickle('tomorrow_data.pickle')
