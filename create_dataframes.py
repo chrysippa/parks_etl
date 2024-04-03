@@ -191,7 +191,7 @@ tomorrow_data['date'] = [tomorrow for x in range(num_parks)]
 
 
 
-# Insert special_days information if applicable
+# Insert special_days information
 
 if pulled_data_days:
     for day in pulled_data_days:
@@ -206,6 +206,14 @@ if pulled_data_days:
             tomorrow_data.at[park_id, 'special_park_day'] = True
             tomorrow_data.at[park_id, 'holiday'] = holiday
             tomorrow_data.at[park_id, 'special_day_note'] = day_note
+
+# If not a special day or holiday, insert False
+
+today_data['holiday'].fillna(value='False', inplace=True)
+today_data['special_park_day'].fillna(value='False', inplace=True)
+
+tomorrow_data['holiday'].fillna(value='False', inplace=True)
+tomorrow_data['special_park_day'].fillna(value='False', inplace=True)
 
 
 
