@@ -60,11 +60,18 @@ for city in cities:
         today_data.loc[p, 'cloud_cover_percent'] = int(round(today['cloudcover']))
         today_data.loc[p, 'max_wind_mph'] = int(round(today['windspeed']))
         today_data.loc[p, 'weather_description'] = today['description']
-        today_data.loc[p, 'weather_icon'] = today['icon'] # one of: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night
         today_data.loc[p, 'uv_index'] = int(today['uvindex'])
         today_data.loc[p, 'humidity'] = int(round(today['humidity']))
         today_data.loc[p, 'sunrise'] = today['sunrise'][:5]
         today_data.loc[p, 'sunset'] = today['sunset'][:5]
+        # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
+        if '-' in today['icon']: 
+            icon_mod = today['icon']
+            icon_mod = icon_mod.split('-')[:-1]
+            icon_mod = '-'.join(icon_mod)
+            today_data.loc[p, 'weather_icon'] = icon_mod
+        else:
+            today_data.loc[p, 'weather_icon'] = today['icon']
         if today['preciptype']:
             precip_list = today['preciptype']
             precip_list[0] = precip_list[0].title()
@@ -97,9 +104,16 @@ for city in cities:
         tomorrow_data.loc[p, 'cloud_cover_percent'] = int(round(tomorrow['cloudcover']))
         tomorrow_data.loc[p, 'max_wind_mph'] = int(round(tomorrow['windspeed']))
         tomorrow_data.loc[p, 'weather_description'] = tomorrow['description']
-        tomorrow_data.loc[p, 'weather_icon'] = tomorrow['icon'] # one of: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night
         tomorrow_data.loc[p, 'uv_index'] = int(tomorrow['uvindex'])
         tomorrow_data.loc[p, 'humidity'] = int(round(tomorrow['humidity']))
+        # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
+        if '-' in tomorrow['icon']: 
+            icon_mod = tomorrow['icon']
+            icon_mod = icon_mod.split('-')[:-1]
+            icon_mod = '-'.join(icon_mod)
+            tomorrow_data.loc[p, 'weather_icon'] = icon_mod
+        else:
+            tomorrow_data.loc[p, 'weather_icon'] = tomorrow['icon']
         if tomorrow['preciptype']:
             precip_list = tomorrow['preciptype']
             precip_list[0] = precip_list[0].title()
