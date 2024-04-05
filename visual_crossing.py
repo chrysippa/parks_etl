@@ -1,14 +1,23 @@
 import csv
 import pandas as pd
 import requests
+from google.cloud import secretmanager
 import time
-from visual_crossing_key import visual_crossing_api_key
 
 
 # Import persisted data
 
 today_data = pd.read_pickle('today_data.pickle')
 tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
+
+
+
+# Get weather API key
+
+client = secretmanager.SecretManagerServiceClient()
+version_name = f'projects/parks-414615/secrets/visual_crossing_api_key/versions/most_recent'
+response = client.access_secret_version(request={"name": version_name})
+api_key = response.payload.data.decode("UTF-8")
 
 
 
@@ -20,7 +29,7 @@ cities = set(today_data['city'])
 alerts_list = []
 
 for city in cities:
-    url = f'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{city}/last1days/next1days?unitGroup=us&elements=datetime%2Cname%2Ctempmax%2Cfeelslikemax%2Chumidity%2Cprecip%2Cprecipprob%2Cpreciptype%2Csnowdepth%2Cwindspeed%2Ccloudcover%2Cuvindex%2Csunrise%2Csunset%2Cdescription%2Cicon&include=days%2Calerts%2Cfcst%2Cstatsfcst%2Cobs%2Cremote%2Cstats&key={visual_crossing_api_key}&contentType=json'
+    url = f'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{city}/last1days/next1days?unitGroup=us&elements=datetime%2Cname%2Ctempmax%2Cfeelslikemax%2Chumidity%2Cprecip%2Cprecipprob%2Cpreciptype%2Csnowdepth%2Cwindspeed%2Ccloudcover%2Cuvindex%2Csunrise%2Csunset%2Cdescription%2Cicon&include=days%2Calerts%2Cfcst%2Cstatsfcst%2Cobs%2Cremote%2Cstats&key={api_key}&contentType=json'
 
     retries = 3
     for i in range(retries):

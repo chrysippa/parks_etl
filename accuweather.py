@@ -1,6 +1,6 @@
-from accuweather_key import accuweather_api_key
 import pandas as pd
 import requests
+from google.cloud import secretmanager
 import time
 
 
@@ -11,13 +11,22 @@ tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
 
 
 
+# Get API key
+
+client = secretmanager.SecretManagerServiceClient()
+version_name = f'projects/parks-414615/secrets/accuweather_api_key/versions/most_recent'
+response = client.access_secret_version(request={"name": version_name})
+api_key = response.payload.data.decode("UTF-8")
+
+
+
 # Query API for location codes for each unique city
 
 cities = set(today_data['city'])
 
 for city in cities:
     
-    location_url = f'http://dataservice.accuweather.com/locations/v1/cities/US/search?apikey={accuweather_api_key}&q={city}'
+    location_url = f'http://dataservice.accuweather.com/locations/v1/cities/US/search?apikey={api_key}&q={city}'
     headers = {'Accept-Encoding': 'gzip'}
 
     retries = 3
@@ -41,7 +50,7 @@ for city in cities:
 
     # Query API for air quality per location
 
-    url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={accuweather_api_key}&details=true'
+    url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{location_key}?apikey={api_key}&details=true'
 
     for i in range(retries):
         try:
