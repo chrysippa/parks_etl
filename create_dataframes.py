@@ -5,8 +5,6 @@ import pandas as pd
 
 # Fetch from database: park IDS and metadata needed for ETL
 
-# to authenticate in production, see here: https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa
-
 project_id = 'parks-414615'
 
 client = BigQueryReadClient()
