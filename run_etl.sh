@@ -1,7 +1,7 @@
 #! /bin/bash
 
-python create_dataframes.py
-python visual_crossing.py
-python accuweather.py
-python write_csvs.py
-python write_to_db.py
+python3 create_dataframes.py
+python3 visual_crossing.py
+python3 accuweather.py
+python3 write_csvs.py
+python3 write_to_db.py
