@@ -1,60 +1,34 @@
-with open('log.txt', 'a') as log:
-    log.write('Now in visual_crossing.py. Importing modules')
-
-try:
-    import csv
-    import pandas as pd
-    import requests
-    from google.cloud import secretmanager
-    import time
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+import csv
+import pandas as pd
+import requests
+from google.cloud import secretmanager
+import time
 
 
-with open('log.txt', 'a') as log:
-    log.write('Import dfs')
-try:
-    # Import persisted data
+# Import persisted data
 
-    today_data = pd.read_pickle('today_data.pickle')
-    tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+today_data = pd.read_pickle('today_data.pickle')
+tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
 
 
-with open('log.txt', 'a') as log:
-    log.write('Get API key from Secrets')
-try:
-    # Get weather API key
 
-    client = secretmanager.SecretManagerServiceClient()
-    version_name = f'projects/parks-414615/secrets/visual_crossing_api_key/versions/most_recent'
-    response = client.access_secret_version(request={"name": version_name})
-    api_key = response.payload.data.decode("UTF-8")
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+# Get weather API key
+
+client = secretmanager.SecretManagerServiceClient()
+version_name = f'projects/parks-414615/secrets/visual_crossing_api_key/versions/most_recent'
+response = client.access_secret_version(request={"name": version_name})
+api_key = response.payload.data.decode("UTF-8")
+
 
 
 # Query API for each unique city and insert to corresponding parks
 # One request returns the period from 2 days ago to tomorrow
 
-with open('log.txt', 'a') as log:
-    log.write('Get set of unique cities')
-try:
-    cities = set(today_data['city'])
+cities = set(today_data['city'])
 
-    alerts_list = []
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+alerts_list = []
 
 for city in cities:
-    with open('log.txt', 'a') as log:
-        log.write(f'Query for city {city}')
-
     url = f'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{city}/last1days/next1days?unitGroup=us&elements=datetime%2Cname%2Ctempmax%2Cfeelslikemax%2Chumidity%2Cprecip%2Cprecipprob%2Cpreciptype%2Csnowdepth%2Cwindspeed%2Ccloudcover%2Cuvindex%2Csunrise%2Csunset%2Cdescription%2Cicon&include=days%2Calerts%2Cfcst%2Cstatsfcst%2Cobs%2Cremote%2Cstats&key={api_key}&contentType=json'
 
     retries = 3
@@ -62,149 +36,114 @@ for city in cities:
         try:
             response = requests.get(url, timeout=3.1)
             response.raise_for_status()
-            with open('log.txt', 'a') as log:
-                log.write(f'Got response for city {city}')
             break
-        except (requests.Timeout, requests.ConnectionError) as e:
+        except (requests.Timeout, requests.ConnectionError):
             time.sleep(i + 1)
-            with open('log.txt', 'a') as log:
-                log.write(str(type(e)) + str(e) + f' on try {i}')
             continue
-        except requests.HTTPError as e:
-            with open('log.txt', 'a') as log:
-                log.write(str(type(e)) + str(e) + f' on try {i} w/ code {response.status_code}')
+        except requests.HTTPError:
             if response.status_code == 500:
                 time.sleep(i + 1)
                 continue
-        except Exception as e:
-            with open('log.txt', 'a') as log:
-                log.write(str(type(e)) + str(e))
 
-    with open('log.txt', 'a') as log:
-        log.write(f'Extract JSON response for {city} & ID days and alerts')
-    try:
-        data = response.json()
+    data = response.json()
 
-        two_days_ago = data['days'][0]
-        yesterday = data['days'][1]
-        today = data['days'][2]
-        tomorrow = data['days'][3]
+    two_days_ago = data['days'][0]
+    yesterday = data['days'][1]
+    today = data['days'][2]
+    tomorrow = data['days'][3]
 
-        alerts = data['alerts']
-    except Exception as e:
-        with open('log.txt', 'a') as log:
-            log.write(str(type(e)) + str(e))
+    alerts = data['alerts']
 
-    with open('log.txt', 'a') as log:
-        log.write(f'Get parks matching city {city}')
-    try:
-        # List of park_ids matching this city; may be multiple
-        parks_in_city = list(today_data.query('city == @city').index)
-    except Exception as e:
-        with open('log.txt', 'a') as log:
-            log.write(str(type(e)) + str(e))
+    # List of park_ids matching this city; may be multiple
+    parks_in_city = list(today_data.query('city == @city').index)
 
-    with open('log.txt', 'a') as log:
-        log.write(f'Insert to parks in {city}')
-    try:
-        for p in parks_in_city:
-            #Insert to today_data
+    for p in parks_in_city:
+        #Insert to today_data
 
-            today_data.loc[p, 'precip_2_days_ago_in'] = two_days_ago['precip']
-            today_data.loc[p, 'precip_yesterday_in'] = yesterday['precip']
-            today_data.loc[p, 'temp_max_f'] = int(round(today['tempmax']))
-            today_data.loc[p, 'feels_like_max_f'] = int(round(today['feelslikemax']))
-            today_data.loc[p, 'precip_prob'] = int(round(today['precipprob']))
-            today_data.loc[p, 'precip_depth_in'] = today['precip']
-            today_data.loc[p, 'cloud_cover_percent'] = int(round(today['cloudcover']))
-            today_data.loc[p, 'max_wind_mph'] = int(round(today['windspeed']))
-            today_data.loc[p, 'weather_description'] = today['description']
-            today_data.loc[p, 'uv_index'] = int(today['uvindex'])
-            today_data.loc[p, 'humidity'] = int(round(today['humidity']))
-            today_data.loc[p, 'sunrise'] = today['sunrise'][:5]
-            today_data.loc[p, 'sunset'] = today['sunset'][:5]
-            # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
-            if '-' in today['icon']: 
-                icon_mod = today['icon']
-                icon_mod = icon_mod.split('-')[:-1]
-                icon_mod = '-'.join(icon_mod)
-                today_data.loc[p, 'weather_icon'] = icon_mod
-            else:
-                today_data.loc[p, 'weather_icon'] = today['icon']
-            if today['preciptype']:
-                precip_list = today['preciptype']
-                precip_list[0] = precip_list[0].title()
-                today_data.loc[p, 'precip_type'] = ', '.join(precip_list)
-            else:
-                today_data.loc[p, 'precip_type'] = 'No precipitation'
-            if alerts:
-                today_data.loc[p, 'weather_alerts'] = True
-                for a in alerts:
-                    # Also append the alert to alerts_list. These will be contents of weather_alerts table.
-                    alert_text = a['headline']
-                    if 'by' in alert_text: # Remove unneeded info (issuing station name)
-                        alert_text = alert_text.split('by')[0]
-                    alerts_list.append({'date': today_data.at[1, 'date'], 'park_id': p, 'alert': alert_text})
-            else:
-                today_data.loc[p, 'weather_alerts'] = False
-            if today['snowdepth']:
-                today_data.loc[p, 'snowpack_depth_in'] = today['snowdepth']
-            else:
-                today_data.loc[p, 'snowpack_depth_in'] = 0
+        today_data.loc[p, 'precip_2_days_ago_in'] = two_days_ago['precip']
+        today_data.loc[p, 'precip_yesterday_in'] = yesterday['precip']
+        today_data.loc[p, 'temp_max_f'] = int(round(today['tempmax']))
+        today_data.loc[p, 'feels_like_max_f'] = int(round(today['feelslikemax']))
+        today_data.loc[p, 'precip_prob'] = int(round(today['precipprob']))
+        today_data.loc[p, 'precip_depth_in'] = today['precip']
+        today_data.loc[p, 'cloud_cover_percent'] = int(round(today['cloudcover']))
+        today_data.loc[p, 'max_wind_mph'] = int(round(today['windspeed']))
+        today_data.loc[p, 'weather_description'] = today['description']
+        today_data.loc[p, 'uv_index'] = int(today['uvindex'])
+        today_data.loc[p, 'humidity'] = int(round(today['humidity']))
+        today_data.loc[p, 'sunrise'] = today['sunrise'][:5]
+        today_data.loc[p, 'sunset'] = today['sunset'][:5]
+        # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
+        if '-' in today['icon']: 
+            icon_mod = today['icon']
+            icon_mod = icon_mod.split('-')[:-1]
+            icon_mod = '-'.join(icon_mod)
+            today_data.loc[p, 'weather_icon'] = icon_mod
+        else:
+            today_data.loc[p, 'weather_icon'] = today['icon']
+        if today['preciptype']:
+            precip_list = today['preciptype']
+            precip_list[0] = precip_list[0].title()
+            today_data.loc[p, 'precip_type'] = ', '.join(precip_list)
+        else:
+            today_data.loc[p, 'precip_type'] = 'No precipitation'
+        if alerts:
+            today_data.loc[p, 'weather_alerts'] = True
+            for a in alerts:
+                # Also append the alert to alerts_list. These will be contents of weather_alerts table.
+                alert_text = a['headline']
+                if 'by' in alert_text: # Remove unneeded info (issuing station name)
+                    alert_text = alert_text.split('by')[0]
+                alerts_list.append({'date': today_data.at[1, 'date'], 'park_id': p, 'alert': alert_text})
+        else:
+            today_data.loc[p, 'weather_alerts'] = False
+        if today['snowdepth']:
+            today_data.loc[p, 'snowpack_depth_in'] = today['snowdepth']
+        else:
+            today_data.loc[p, 'snowpack_depth_in'] = 0
+        
+        # Insert to tomorrow_data
+
+        tomorrow_data.loc[p, 'precip_2_days_ago_in'] = yesterday['precip']
+        tomorrow_data.loc[p, 'precip_yesterday_in'] = today['precip']
+        tomorrow_data.loc[p, 'temp_max_f'] = int(round(tomorrow['tempmax']))
+        tomorrow_data.loc[p, 'feels_like_max_f'] = int(round(tomorrow['feelslikemax']))
+        tomorrow_data.loc[p, 'precip_prob'] = int(round(tomorrow['precipprob']))
+        tomorrow_data.loc[p, 'precip_depth_in'] = tomorrow['precip']
+        tomorrow_data.loc[p, 'cloud_cover_percent'] = int(round(tomorrow['cloudcover']))
+        tomorrow_data.loc[p, 'max_wind_mph'] = int(round(tomorrow['windspeed']))
+        tomorrow_data.loc[p, 'weather_description'] = tomorrow['description']
+        tomorrow_data.loc[p, 'uv_index'] = int(tomorrow['uvindex'])
+        tomorrow_data.loc[p, 'humidity'] = int(round(tomorrow['humidity']))
+        # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
+        if '-' in tomorrow['icon']: 
+            icon_mod = tomorrow['icon']
+            icon_mod = icon_mod.split('-')[:-1]
+            icon_mod = '-'.join(icon_mod)
+            tomorrow_data.loc[p, 'weather_icon'] = icon_mod
+        else:
+            tomorrow_data.loc[p, 'weather_icon'] = tomorrow['icon']
+        if tomorrow['preciptype']:
+            precip_list = tomorrow['preciptype']
+            precip_list[0] = precip_list[0].title()
+            tomorrow_data.loc[p, 'precip_type'] = ', '.join(precip_list)
+        else:
+            tomorrow_data.loc[p, 'precip_type'] = 'No precipitation'
+        if tomorrow['snowdepth']:
+            tomorrow_data.loc[p, 'snowpack_depth_in'] = tomorrow['snowdepth']
+        else:
+            tomorrow_data.loc[p, 'snowpack_depth_in'] = 0
+
+
+
+# Persist the data
             
-            # Insert to tomorrow_data
+if alerts_list:
+    with open('weather_alerts.csv', 'w', newline='') as file:
+        fieldnames = ['date', 'park_id', 'alert']
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(alerts_list)
 
-            tomorrow_data.loc[p, 'precip_2_days_ago_in'] = yesterday['precip']
-            tomorrow_data.loc[p, 'precip_yesterday_in'] = today['precip']
-            tomorrow_data.loc[p, 'temp_max_f'] = int(round(tomorrow['tempmax']))
-            tomorrow_data.loc[p, 'feels_like_max_f'] = int(round(tomorrow['feelslikemax']))
-            tomorrow_data.loc[p, 'precip_prob'] = int(round(tomorrow['precipprob']))
-            tomorrow_data.loc[p, 'precip_depth_in'] = tomorrow['precip']
-            tomorrow_data.loc[p, 'cloud_cover_percent'] = int(round(tomorrow['cloudcover']))
-            tomorrow_data.loc[p, 'max_wind_mph'] = int(round(tomorrow['windspeed']))
-            tomorrow_data.loc[p, 'weather_description'] = tomorrow['description']
-            tomorrow_data.loc[p, 'uv_index'] = int(tomorrow['uvindex'])
-            tomorrow_data.loc[p, 'humidity'] = int(round(tomorrow['humidity']))
-            # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
-            if '-' in tomorrow['icon']: 
-                icon_mod = tomorrow['icon']
-                icon_mod = icon_mod.split('-')[:-1]
-                icon_mod = '-'.join(icon_mod)
-                tomorrow_data.loc[p, 'weather_icon'] = icon_mod
-            else:
-                tomorrow_data.loc[p, 'weather_icon'] = tomorrow['icon']
-            if tomorrow['preciptype']:
-                precip_list = tomorrow['preciptype']
-                precip_list[0] = precip_list[0].title()
-                tomorrow_data.loc[p, 'precip_type'] = ', '.join(precip_list)
-            else:
-                tomorrow_data.loc[p, 'precip_type'] = 'No precipitation'
-            if tomorrow['snowdepth']:
-                tomorrow_data.loc[p, 'snowpack_depth_in'] = tomorrow['snowdepth']
-            else:
-                tomorrow_data.loc[p, 'snowpack_depth_in'] = 0
-    except Exception as e:
-        with open('log.txt', 'a') as log:
-            log.write(str(type(e)) + str(e))
-
-
-with open('log.txt', 'a') as log:
-    log.write('Persist dfs & weather_alerts')
-try:
-    # Persist the data
-                
-    if alerts_list:
-        with open('weather_alerts.csv', 'w', newline='') as file:
-            fieldnames = ['date', 'park_id', 'alert']
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(alerts_list)
-
-    today_data.to_pickle('today_data.pickle')
-    tomorrow_data.to_pickle('tomorrow_data.pickle')
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
-
-with open('log.txt', 'a') as log:
-    log.write('Exiting visual_crossing.py')
+today_data.to_pickle('today_data.pickle')
+tomorrow_data.to_pickle('tomorrow_data.pickle')

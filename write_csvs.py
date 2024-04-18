@@ -1,72 +1,40 @@
-with open('log.txt', 'a') as log:
-    log.write('Now in write_csvs.py. Importing modules')
+import pandas as pd
 
-try:
-    import pandas as pd
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+# Import persisted data
 
-with open('log.txt', 'a') as log:
-    log.write('Unpickle data')
-try:
-    # Import persisted data
+today_data = pd.read_pickle('today_data.pickle')
+tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
 
-    today_data = pd.read_pickle('today_data.pickle')
-    tomorrow_data = pd.read_pickle('tomorrow_data.pickle')
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
 
-with open('log.txt', 'a') as log:
-    log.write('Convert index to col')
-try:
-    # Change park_index from DataFrame index to column
 
-    today_data.reset_index(inplace=True)
-    today_data.rename(columns={'index':'park_id'}, inplace=True)
+# Change park_index from DataFrame index to column
 
-    tomorrow_data.reset_index(inplace=True)
-    tomorrow_data.rename(columns={'index':'park_id'}, inplace=True)
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+today_data.reset_index(inplace=True)
+today_data.rename(columns={'index':'park_id'}, inplace=True)
 
-with open('log.txt', 'a') as log:
-    log.write('Move date to 1st col')
-try:
-    # Move date column to beginning; BigQuery expects this ordering
+tomorrow_data.reset_index(inplace=True)
+tomorrow_data.rename(columns={'index':'park_id'}, inplace=True)
 
-    date_today = today_data.pop('date')
-    today_data.insert(0, 'date', date_today)
 
-    date_tomorrow = tomorrow_data.pop('date')
-    tomorrow_data.insert(0, 'date', date_tomorrow)
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
 
-with open('log.txt', 'a') as log:
-    log.write('Remove metadata')
-try:
-    # Remove metadata
+# Move date column to beginning; BigQuery expects this ordering
 
-    today_data.drop(columns=['name', 'type', 'city', 'site_url'], inplace=True)
-    tomorrow_data.drop(columns=['name', 'type', 'city', 'site_url'], inplace=True)
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
+date_today = today_data.pop('date')
+today_data.insert(0, 'date', date_today)
 
-with open('log.txt', 'a') as log:
-    log.write('Write csvs')
-try:
-    # Write CSVs
+date_tomorrow = tomorrow_data.pop('date')
+tomorrow_data.insert(0, 'date', date_tomorrow)
 
-    today_data.to_csv('today_data.csv', index=False)
-    tomorrow_data.to_csv('tomorrow_data.csv', index=False)
-except Exception as e:
-    with open('log.txt', 'a') as log:
-        log.write(str(type(e)) + str(e))
 
-with open('log.txt', 'a') as log:
-    log.write('Exiting write_csvs.py')
+
+# Remove metadata
+
+today_data.drop(columns=['name', 'type', 'city', 'site_url'], inplace=True)
+tomorrow_data.drop(columns=['name', 'type', 'city', 'site_url'], inplace=True)
+
+
+
+# Write CSVs
+
+today_data.to_csv('today_data.csv', index=False)
+tomorrow_data.to_csv('tomorrow_data.csv', index=False)
