@@ -60,12 +60,12 @@ for city in cities:
     for p in parks_in_city:
         #Insert to today_data
 
-        today_data.loc[p, 'precip_2_days_ago_in'] = two_days_ago['precip']
-        today_data.loc[p, 'precip_yesterday_in'] = yesterday['precip']
+        today_data.loc[p, 'precip_2_days_ago_in'] = round(two_days_ago['precip'], 1)
+        today_data.loc[p, 'precip_yesterday_in'] = round(yesterday['precip'], 1)
         today_data.loc[p, 'temp_max_f'] = int(round(today['tempmax']))
         today_data.loc[p, 'feels_like_max_f'] = int(round(today['feelslikemax']))
         today_data.loc[p, 'precip_prob'] = int(round(today['precipprob']))
-        today_data.loc[p, 'precip_depth_in'] = today['precip']
+        today_data.loc[p, 'precip_depth_in'] = round(today['precip'], 1)
         today_data.loc[p, 'cloud_cover_percent'] = int(round(today['cloudcover']))
         today_data.loc[p, 'max_wind_mph'] = int(round(today['windspeed']))
         today_data.loc[p, 'weather_description'] = today['description']
@@ -98,18 +98,18 @@ for city in cities:
         else:
             today_data.loc[p, 'weather_alerts'] = False
         if today['snowdepth']:
-            today_data.loc[p, 'snowpack_depth_in'] = today['snowdepth']
+            today_data.loc[p, 'snowpack_depth_in'] = round(today['snowdepth'], 1)
         else:
             today_data.loc[p, 'snowpack_depth_in'] = 0
         
         # Insert to tomorrow_data
 
-        tomorrow_data.loc[p, 'precip_2_days_ago_in'] = yesterday['precip']
-        tomorrow_data.loc[p, 'precip_yesterday_in'] = today['precip']
+        tomorrow_data.loc[p, 'precip_2_days_ago_in'] = round(yesterday['precip'], 1)
+        tomorrow_data.loc[p, 'precip_yesterday_in'] = round(today['precip'], 1)
         tomorrow_data.loc[p, 'temp_max_f'] = int(round(tomorrow['tempmax']))
         tomorrow_data.loc[p, 'feels_like_max_f'] = int(round(tomorrow['feelslikemax']))
         tomorrow_data.loc[p, 'precip_prob'] = int(round(tomorrow['precipprob']))
-        tomorrow_data.loc[p, 'precip_depth_in'] = tomorrow['precip']
+        tomorrow_data.loc[p, 'precip_depth_in'] = round(tomorrow['precip'], 1)
         tomorrow_data.loc[p, 'cloud_cover_percent'] = int(round(tomorrow['cloudcover']))
         tomorrow_data.loc[p, 'max_wind_mph'] = int(round(tomorrow['windspeed']))
         tomorrow_data.loc[p, 'weather_description'] = tomorrow['description']
@@ -130,7 +130,7 @@ for city in cities:
         else:
             tomorrow_data.loc[p, 'precip_type'] = 'No precipitation'
         if tomorrow['snowdepth']:
-            tomorrow_data.loc[p, 'snowpack_depth_in'] = tomorrow['snowdepth']
+            tomorrow_data.loc[p, 'snowpack_depth_in'] = round(tomorrow['snowdepth'], 1)
         else:
             tomorrow_data.loc[p, 'snowpack_depth_in'] = 0
 
