@@ -190,7 +190,13 @@ try:
 
     tomorrow_data = pd.DataFrame(data=tomorrow_data_rows)
 
-    
+
+
+    try:
+        i
+    except Exception as e:
+        with open('log.txt', 'a') as log:
+            log.write(str(type(e)) + str(e))
     # Append metadata to dataframes
 
     park_metadata = pd.DataFrame(data=pulled_data_parks)
