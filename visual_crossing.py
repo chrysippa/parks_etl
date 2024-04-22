@@ -60,12 +60,12 @@ for city in cities:
     for p in parks_in_city:
         #Insert to today_data
 
-        today_data.loc[p, 'precip_2_days_ago_in'] = round(two_days_ago['precip'], 1)
-        today_data.loc[p, 'precip_yesterday_in'] = round(yesterday['precip'], 1)
+        today_data.loc[p, 'precip_2_days_ago_in'] = round(two_days_ago['precip'], 2)
+        today_data.loc[p, 'precip_yesterday_in'] = round(yesterday['precip'], 2)
         today_data.loc[p, 'temp_max_f'] = int(round(today['tempmax']))
         today_data.loc[p, 'feels_like_max_f'] = int(round(today['feelslikemax']))
         today_data.loc[p, 'precip_prob'] = int(round(today['precipprob']))
-        today_data.loc[p, 'precip_depth_in'] = round(today['precip'], 1)
+        today_data.loc[p, 'precip_depth_in'] = round(today['precip'], 2)
         today_data.loc[p, 'cloud_cover_percent'] = int(round(today['cloudcover']))
         today_data.loc[p, 'max_wind_mph'] = int(round(today['windspeed']))
         today_data.loc[p, 'weather_description'] = today['description']
@@ -104,12 +104,12 @@ for city in cities:
         
         # Insert to tomorrow_data
 
-        tomorrow_data.loc[p, 'precip_2_days_ago_in'] = round(yesterday['precip'], 1)
-        tomorrow_data.loc[p, 'precip_yesterday_in'] = round(today['precip'], 1)
+        tomorrow_data.loc[p, 'precip_2_days_ago_in'] = round(yesterday['precip'], 2)
+        tomorrow_data.loc[p, 'precip_yesterday_in'] = round(today['precip'], 2)
         tomorrow_data.loc[p, 'temp_max_f'] = int(round(tomorrow['tempmax']))
         tomorrow_data.loc[p, 'feels_like_max_f'] = int(round(tomorrow['feelslikemax']))
         tomorrow_data.loc[p, 'precip_prob'] = int(round(tomorrow['precipprob']))
-        tomorrow_data.loc[p, 'precip_depth_in'] = round(tomorrow['precip'], 1)
+        tomorrow_data.loc[p, 'precip_depth_in'] = round(tomorrow['precip'], 2)
         tomorrow_data.loc[p, 'cloud_cover_percent'] = int(round(tomorrow['cloudcover']))
         tomorrow_data.loc[p, 'max_wind_mph'] = int(round(tomorrow['windspeed']))
         tomorrow_data.loc[p, 'weather_description'] = tomorrow['description']
