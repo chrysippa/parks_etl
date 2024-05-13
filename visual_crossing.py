@@ -91,9 +91,7 @@ for city in cities:
             today_data.loc[p, 'weather_alerts'] = True
             for a in alerts:
                 # Also append the alert to alerts_list. These will be contents of weather_alerts table.
-                alert_text = a['headline']
-                if 'by' in alert_text: # Remove unneeded info (issuing station name)
-                    alert_text = alert_text.split('by')[0]
+                alert_text = a['description']
                 alerts_list.append({'date': today_data.at[1, 'date'], 'park_id': p, 'alert': alert_text})
         else:
             today_data.loc[p, 'weather_alerts'] = False
