@@ -71,8 +71,11 @@ for city in cities:
         today_data.loc[p, 'weather_description'] = today['description']
         today_data.loc[p, 'uv_index'] = int(today['uvindex'])
         today_data.loc[p, 'humidity'] = int(round(today['humidity']))
-        today_data.loc[p, 'sunrise'] = today['sunrise'][:5]
-        today_data.loc[p, 'sunset'] = today['sunset'][:5]
+        today_data.loc[p, 'sunrise'] = today['sunrise'][1:5]
+
+        sunset_minute = today['sunset'][3:5]
+        sunset_hour = int(today['sunset'][:2]) - 12
+        today_data.loc[p, 'sunset'] = str(sunset_hour) + ':' + sunset_minute
         # Icon may be: snow, rain, fog, wind, cloudy, partly-cloudy-day, partly-cloudy-night, clear-day, clear-night. Strip -day or -night if needed.
         if '-' in today['icon']: 
             icon_mod = today['icon']
